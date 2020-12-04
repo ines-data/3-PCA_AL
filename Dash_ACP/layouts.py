@@ -1,6 +1,7 @@
 import dash_core_components as dcc
 import dash_html_components as html
 from app import app
+from urllib.parse import quote
 import pandas as pd 
 import numpy as np
 import plotly.graph_objs as go
@@ -49,7 +50,11 @@ df2 = df[['world_rank','teaching','international','research','citations','income
 # prepare data
 df2['index']= np.arange(1, len(df2)+1) # ajout d'une colonne index pour avoir la nuance des couleurs à droite du graphe
 
-dff = df.corr(method="spearman")
+dff = df[['world_rank','teaching','international','research','citations','income','total_score','num_students','student_staff_ratio','international_students','female_male_ratio']]#.corr(method="spearman")
+#dff['colums'] = ['world_rank','teaching','international','research','citations','income','total_score','num_students','student_staff_ratio','international_students','female_male_ratio']
+#dff = pd.concat([dff1,dff2])
+dff = dff.corr(method="spearman")
+
 
 ########  ACP / PCA  #########
 x = df[['teaching','international','research','citations','income','total_score','num_students',
@@ -83,7 +88,7 @@ def generate_table(dataframe, max_rows=10):
         ])
     ])
 
-def generate_table2(dataframe, max_rows=10):
+def generate_table2(dataframe, max_rows=15):
     return html.Table([
         html.Thead(
             html.Tr([html.Th(col) for col in dataframe.columns])
@@ -97,7 +102,7 @@ def generate_table2(dataframe, max_rows=10):
 
 def generate_table3(dataframe):
     return dash_table.DataTable(
-    data=df.to_dict('records'),
+    data=dataframe.to_dict('records'),
     columns=[{'id': c, 'name': c} for c in df.columns],
     page_size=10
     )
@@ -143,12 +148,32 @@ layout1 = html.Div([
     get_menu(),
     html.H2(children='Tableau des 50 premières universités au classement mondial',style={'padding': '30px'}),
     generate_table3(df),
+    # Download Button
+            html.Div([
+                html.A(html.Button('Download data'),
+                    id="download-button",
+                    download='university_top_50.csv',
+                    href="data:text/csv;charset=utf-8,"+quote(df.to_csv(index=False)),
+                    target="_blank"),
+                ]),
     dcc.Graph(
         id = 'id3',
         figure=fig1
     ),
     html.H2(children='Tableau des correlations',style={'padding': '30px'}),
-    generate_table3(dff),
+    generate_table2(dff),
+    # Download Button
+            html.Div([
+                html.A(html.Button('Download data'),
+                    id="download-button",
+                    download='matrice_correlation.csv',
+                    href="data:text/csv;charset=utf-8,"+quote(dff.to_csv(index=False)),
+                    target="_blank"),
+                ]),
+    html.Div([
+        html.H2(children='Matrice des correlations',style={'padding': '30px'}),
+        html.Img(src=app.get_asset_url('matrix_correlation.png'), height=500, width=700, style={'padding-left':'25vw'})
+    ]),
     html.Div(dcc.Markdown(text1, style={'font-size':'18px'})),
     html.Div(html.H3('Correlation entre le rang universitaire et le score universitaire pour la recherche'),style={'padding': '30px'}),
     dcc.Graph(
@@ -184,6 +209,14 @@ layout2 = html.Div([
     get_menu(),
     html.H2(children='Tableau des 50 premières universités au classement mondial',style={'padding': '30px'}),
     generate_table3(df),
+    # Download Button
+            html.Div([
+                html.A(html.Button('Download data'),
+                    id="download-button",
+                    download='university_top_50.csv',
+                    href="data:text/csv;charset=utf-8,"+quote(df.to_csv(index=False)),
+                    target="_blank"),
+                ]),
     html.Div([
         html.Img(src=app.get_asset_url('ACP.png'), height=700, width=700, style={'padding-left':'25vw'})
         #html.Div(style = {'padding-left': '30vw', 'height':'180', 'width':'150'},children = [html.Img(id='image',src=app.get_asset_url('ACP.png'))]
